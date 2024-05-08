@@ -1,0 +1,12 @@
+.header-scroll {
+    animation: stuckMoveDown ease 0.3s;
+  }
+  
+  @keyframes stuckMoveDown {
+    from {
+      transform: translateY(-150px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
