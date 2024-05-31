@@ -10,11 +10,35 @@ import { motion } from 'framer-motion'
 import path from 'src/constants/path'
 import Popover from '../Popover'
 import Input from '../Input/Input'
-import { formatCurrency, getAvatarURL } from 'src/utils/utils'
+import { dateTranfer, formatCurrency, getAvatarURL } from 'src/utils/utils'
 import { AppContext } from 'src/context/app.context'
-export default function Header() {
+import { useQuery } from '@tanstack/react-query'
+import { orderStatus } from 'src/constants/order'
+import orderApi from 'src/apis/order.api'
+import useSearchProduct from 'src/hooks/useSearchProduct'
+import notifyApis from 'src/apis/notify.api'
+import classNames from 'classnames'
+
+interface Props {
+  breadTag?: String
+}
+export default function Header({ breadTag }: Props) {
   const [scroll, setScroll] = useState(false)
   const { isAuthenticated, profile } = useContext(AppContext)
+
+  const { register, onSubmit } = useSearchProduct()
+
+  const { data: orderInCartData } = useQuery({
+    queryKey: ['cart', { status: orderStatus.INCART }],
+    queryFn: () => orderApi.getCart({ customerId: profile?.id as number }),
+    enabled: isAuthenticated
+  })
+  const { data: notifyData } = useQuery({
+    queryKey: ['notitfy', profile?.id],
+    queryFn: () => notifyApis.getByUser(profile?.id as number),
+    enabled: isAuthenticated
+  })
+
   const headerTransaction = () => {
     if (window.scrollY >= 100) {
       setScroll(true)
@@ -24,7 +48,7 @@ export default function Header() {
   }
   window.addEventListener('scroll', headerTransaction)
 
-  
+  const onSearchProduct = () => {}
 
   return (
     <motion.div className={'border-b-1 shadow-md top-0 z-20 bg-cyan-200 ' + (scroll ? 'header-scroll sticky' : '')}>
@@ -265,6 +289,7 @@ export default function Header() {
           <div className='flex font-medium'>
             <div className='flex items-center text-gray-500 hover:opacity-70'>
               <Popover
+                isArrowOpen={true}
                 placement='bottom-end'
                 className='flex items-center py-1 cursor-pointer'
                 popover={
@@ -314,6 +339,7 @@ export default function Header() {
             )}
             {isAuthenticated && (
               <Popover
+                isArrowOpen={true}
                 placement='top-start'
                 className='flex items-center py-2 hover:text-gray-300 cursor-point'
                 popover={
@@ -358,13 +384,17 @@ export default function Header() {
           <div className='col-span-3 h-full'>
             <img src={logo} alt='logo' className='' />
           </div>
-          <form className='col-span-4 col-start-5 ml-10' noValidate>
-            <div className='flex border-2 border-gray-400 rounded-full justify-between px-1 py-1 max-w-[500px] bg-white'>
+          <div className='col-span-4 col-start-5 ml-10'>
+            <form
+              className='flex border-2 border-gray-400 rounded-full justify-between px-1 py-1 max-w-[500px] bg-white'
+              onSubmit={onSubmit}
+            >
               <Input
                 classNameInput='ml-3 w-5/6 outline-none'
                 placeholder='Bạn tìm kiếm gì'
                 className='w-full h-6 py-1'
                 name='searchString'
+                register={register}
               />
               <button className='text-center px-5 py-1 border-gray-400 bg-pink rounded-full hover:opacity-90'>
                 <svg
@@ -382,63 +412,105 @@ export default function Header() {
                   />
                 </svg>
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
           <div className='col-span-1 col-start-10 mb-4 relative justify-self-start'>
             <Popover
+              isArrowOpen={true}
               offsetFix={8}
               placement={'bottom-end'}
               popover={
-                <div className='flex flex-col max-w-[300px] bg-white text-xs'>
-                  <div className='text-gray-400 capitalize mt-2'>sản phẩm mới thêm</div>
-                  {/* {purchasesInCart?.slice(0, MAX_SHOW_MINI_CART).map((purchase) => (
-                    <div className='flex align-top mt-4 justify-between gap-2' key={purchase._id}>
+                <div className='flex flex-col w-[300px] bg-white text-sm'>
+                  <div className='text-gray-400 capitalize mt-2 text-xs'>sản phẩm mới thêm</div>
+                  {orderInCartData?.data.data.slice(0, 5).map((order) => (
+                    <div
+                      className='flex align-middle items-center mt-4 justify-between gap-2 w-[100%] bg-gray-50'
+                      key={order.id}
+                    >
                       <img
-                        className='w-10 h-10 object-cover'
-                        alt={purchase.product.name}
-                        src={purchase.product.image}
+                        className='w-14 h-14 object-cover'
+                        alt={order.product.title}
+                        src={order.product.imageList[0].fileName}
                       />
-                      <div className='flex-grow truncate overflow-hidden'>{purchase.product.name}</div>
-                      <div className='text-orange'>đ{formatCurrency(purchase.product.price)}</div>
+                      <div className='flex-grow truncate overflow-hidden text-xs'>{order.product.title}</div>
+                      <div className='text-pink2'>đ{formatCurrency(order.product.price)}</div>
                     </div>
-                  ))} */}
-
-                  <div className='flex flex-col items-center justify-center w-[300px] capitalize'>
-                    <img src={noProduct} alt='' className='w-24 h-24' />
-                    giỏ hàng trống
-                  </div>
+                  ))}
+                  {(!isAuthenticated || orderInCartData?.data.data.length === 0) && (
+                    <div className='flex flex-col items-center justify-center w-[300px] capitalize'>
+                      <img src={noProduct} alt='' className='w-24 h-24' />
+                      giỏ hàng trống
+                    </div>
+                  )}
 
                   <div className='flex justify-between items-center my-4'>
-                    <div className='text-gray-500 capitalize'> Thêm vào giỏ hàng</div>
-                    <Link to='' className='bg-orange px-3 py-2 text-white hover:opacity-90'>
-                      Xem giỏ hàng
-                    </Link>
+                    <div className='text-gray-500 capitalize text-xs'> Thêm vào giỏ hàng</div>
+                    {isAuthenticated ? (
+                      <Link to={path.cart} className='bg-pink px-3 py-2 text-gray-500 hover:opacity-90 rounded-sm'>
+                        Xem giỏ hàng
+                      </Link>
+                    ) : (
+                      <Link to={path.login} className='bg-pink px-3 py-2 text-gray-500 hover:opacity-90 rounded-sm'>
+                        Đăng nhập
+                      </Link>
+                    )}
                   </div>
                 </div>
               }
             >
-              <Link to=''>
+              <Link to={isAuthenticated ? path.cart : path.login}>
                 <img src={cart} alt='' className='w-9' />
-                <span className='absolute bg-pink rounded-full w-5 h-4 right-[-4px] top-[-6px] text-gray-600 flex justify-center items-center text-xs'>
-                  1
-                </span>
+                {isAuthenticated && (
+                  <span className='absolute bg-pink rounded-full w-5 h-4 right-[-4px] top-[-6px] text-gray-600 flex justify-center items-center text-xs'>
+                    {orderInCartData?.data.data.length}
+                  </span>
+                )}
               </Link>
             </Popover>
           </div>
           <div className='col-span-2 col-start-12 mb-4 relative justify-self-start'>
             <Popover
+              isArrowOpen={isAuthenticated}
               offsetFix={8}
               placement={'bottom-end'}
-              popover={<div className='flex flex-col max-w-[400px] bg-white text-xs w-60 h-44'>fds</div>}
+              popover={
+                isAuthenticated && (
+                  <div className='flex flex-col w-[300px] bg-white text-sm max-h-[400px] overflow-y-scroll'>
+                    <div className='flex justify-between m-3'>
+                      <div className='text-gray-400 capitalize mt-2 text-xs'>Thông báo</div>
+                      <button className=' text-gray-500 p-2 rounded-sm bg-pink hover:opacity-90'>
+                        Đánh dấu đã đọc
+                      </button>
+                    </div>
+
+                    {notifyData?.data.data.map((notify, index) => (
+                      <div
+                        className={classNames(
+                          'flex align-middle items-start p-3 border-t  border-gray-300 justify-between gap-2 w-[100%]',
+                          {
+                            'bg-gray-200': notify.status === 0
+                          }
+                        )}
+                        key={index}
+                      >
+                        <div className='flex-grow text-xs'>{notify.content}</div>
+                        <div className='text-pink2 text-xs'>{dateTranfer(notify.date)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              }
             >
               <img src={bell} className='w-9' />
-              <span className='absolute bg-pink rounded-full w-5 h-4 right-[-4px] top-[-6px] text-gray-600 flex justify-center items-center text-xs'>
-                1
-              </span>
+              {isAuthenticated && (
+                <span className='absolute bg-pink rounded-full w-5 h-4 right-[-4px] top-[-6px] text-gray-600 flex justify-center items-center text-xs'>
+                  {notifyData?.data.data.length}
+                </span>
+              )}
             </Popover>
           </div>
         </div>
-        <Bread></Bread>
+        <Bread tag={breadTag}></Bread>
       </div>
     </motion.div>
   )

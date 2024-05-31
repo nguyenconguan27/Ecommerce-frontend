@@ -11,7 +11,7 @@ export default function useQueryConfig() {
   const queryParams = useQueryParams()
   const queryConfig: QueryConfig = omitBy(
     {
-      page_num: queryParams.page_num || '1',
+      page_num: queryParams.page_num || 1,
       page_size: queryParams.page_size || 20,
       sort_field: queryParams.sort_field,
       sort_dir: queryParams.sort_dir,

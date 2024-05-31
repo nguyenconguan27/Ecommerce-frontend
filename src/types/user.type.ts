@@ -7,3 +7,7 @@ export interface User {
   image?: string
   phone?: string
 }
+
+export interface Customer extends User {
+  cartId: number
+}

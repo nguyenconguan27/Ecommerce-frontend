@@ -1,21 +1,28 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import classNames from 'classnames'
+import { profile } from 'console'
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import orderApi from 'src/apis/order.api'
 import productApi from 'src/apis/pruduct.api'
+import { reviewApi } from 'src/apis/review.api'
 import ProductRating from 'src/components/ProductRating'
 import QuantitySelect from 'src/components/QuantitySelect'
+import { orderStatus } from 'src/constants/order'
+import { ProductType } from 'src/types/product.type'
+import { getProfileFromLS } from 'src/utils/auth'
 import { formatCurrency, getAvatarURL, getIdFromNameId, getImage, perSale } from 'src/utils/utils'
 
 export default function ProductDetail() {
   const imageRef = useRef<HTMLImageElement>(null)
-  const [currentIndexImages, setCurrentIndexImage] = useState([0, 2])
+  const [currentIndexImages, setCurrentIndexImage] = useState([0, 5])
   const [buyCount, setBuyCount] = useState(1)
   const [activeImage, setActiveImage] = useState('')
-  const [sizePiecked, setSizePicked] = useState(-1)
+  const [sizeIndexPiecked, setSizeIndexPicked] = useState(-1)
+  const [sizePicked, setSizePicked] = useState('')
+  const profile = getProfileFromLS()
   const { nameId } = useParams()
   const id = nameId && getIdFromNameId(nameId as string)
   const navigate = useNavigate()
@@ -24,6 +31,10 @@ export default function ProductDetail() {
   const { data: productData } = useQuery({
     queryKey: ['product', id],
     queryFn: () => productApi.getProductDetail(id as string)
+  })
+  const { data: reviewsData } = useQuery({
+    queryKey: ['reviews', { productId: id }],
+    queryFn: () => reviewApi.getByProduct(Number(id) as number)
   })
   const orderMutation = useMutation({
     mutationFn: (data: { productId: number; quantity: number; size: string; cartId: number }) =>
@@ -35,6 +46,10 @@ export default function ProductDetail() {
       setActiveImage(product.imageList[0].fileName)
     }
   }, [product])
+
+  useEffect(() => {
+    window.scroll(0, 0)
+  }, [])
 
   const handleActiveImage = (image: string) => {
     setActiveImage(image)
@@ -61,8 +76,7 @@ export default function ProductDetail() {
   )
 
   const next = () => {
-    if (currentIndexImages[1] < 8) {
-      //(product as ProductType).images.length
+    if (currentIndexImages[1] < (product as ProductType).imageList.length) {
       setCurrentIndexImage((prev) => [prev[0] + 1, prev[1] + 1])
     }
   }
@@ -92,19 +106,21 @@ export default function ProductDetail() {
     imageRef.current?.removeAttribute('style')
   }
 
-  const handleChangePickedSize = (sizeNum: number) => {
-    setSizePicked(sizeNum)
+  const handleChangePickedSize = (sizeNum: number, size: string) => {
+    setSizePicked(size)
+    setSizeIndexPicked(sizeNum)
   }
 
   const handleAddToCart = () => {
     orderMutation.mutate(
-      { productId: product?.id as number, quantity: buyCount, size: 'M', cartId: 1 },
+      { productId: product?.id as number, quantity: buyCount, size: sizePicked, cartId: profile.cartId },
       {
         onSuccess: () => {
           toast.success('Thêm giỏ hàng thành công', {
             autoClose: 1000
           })
-          // queryClient.invalidateQueries({ queryKey: ['order', { status: Order.inCart }] })
+          queryClient.invalidateQueries({ queryKey: ['cart', { status: orderStatus.INCART }] })
+          queryClient.invalidateQueries({ queryKey: ['product', id] })
         }
       }
     )
@@ -120,12 +136,7 @@ export default function ProductDetail() {
               onMouseMove={handleZoom}
               onMouseLeave={handleRemoveZoom}
             >
-              <img
-                src={activeImage}
-                // alt={product.name}
-                className='object-cover absolute left-0 top-0 w-full h-full'
-                ref={imageRef}
-              />
+              <img src={activeImage} className='object-cover absolute left-0 top-0 w-full h-full' ref={imageRef} />
             </div>
             <div className='grid grid-cols-5 gap-4 mt-3 relative'>
               <button
@@ -173,7 +184,7 @@ export default function ProductDetail() {
             <div className='flex items-center'>
               <span className='uppercase font-bold mr-4'>Sản phẩm mới</span>
               <ProductRating rating={product?.rate as number} />
-              <span className='ml-1'>{product?.rate !== 0 || 'Chưa có đánh giá'}</span>
+              <span className='ml-1'>{product?.rate == 0 ? 'Chưa có đánh giá' : product?.rate}</span>
             </div>
             <div>
               <span className='text-xs text-gray-600 mr-2'>Đã bán:</span>
@@ -189,22 +200,23 @@ export default function ProductDetail() {
             </div>
             <div className='mt-3'>
               <span>Kích thước:</span>
-              <div className='mt-3 flex w-[40%] justify-between'>
+              <div className='mt-3 flex w-[40%] justify-start'>
                 {product?.sizeList.map((size, index) => {
                   return (
                     <button
-                      className={classNames('bg-gray-200 px-4 py-2 rounded-md text-sm hover:bg-pink', {
-                        'bg-pink': sizePiecked === index
+                      className={classNames('mr-5 bg-gray-200 px-4 py-2 rounded-md text-sm hover:bg-pink', {
+                        'bg-pink': sizeIndexPiecked === index,
+                        'pointer-events-none opacity-70 text-gray-500': size.quantity === 0
                       })}
-                      onClick={() => handleChangePickedSize(index)}
+                      onClick={() => handleChangePickedSize(index, size.size)}
                     >
                       {size.size}
                     </button>
                   )
                 })}
               </div>
-              {sizePiecked !== -1 && (
-                <span className='text-sm font-light'>số lượng: {product?.sizeList[sizePiecked].quantity}</span>
+              {sizeIndexPiecked !== -1 && (
+                <span className='text-sm font-light'>số lượng: {product?.sizeList[sizeIndexPiecked].quantity}</span>
               )}
             </div>
             <div
@@ -218,7 +230,9 @@ export default function ProductDetail() {
                 <QuantitySelect
                   classNameWrapper='flex'
                   value={buyCount}
-                  productQuantity={(sizePiecked !== -1 && (product?.sizeList[sizePiecked].quantity as number)) || 1}
+                  productQuantity={
+                    (sizeIndexPiecked !== -1 && (product?.sizeList[sizeIndexPiecked].quantity as number)) || 1
+                  }
                   onType={(value) => handleChangeQuantity(value)}
                   decrease={(value) => handleChangeQuantity(value)}
                   increase={(value) => handleChangeQuantity(value)}
@@ -226,61 +240,44 @@ export default function ProductDetail() {
                 />
               </div>
 
-              {sizePiecked !== -1 && (
-                <span className='ml-5'>{product?.sizeList[sizePiecked].quantity} sản phẩm có sẵn</span>
+              {sizeIndexPiecked !== -1 && (
+                <span className='ml-5'>{product?.sizeList[sizeIndexPiecked].quantity} sản phẩm có sẵn</span>
               )}
             </div>
             <div className='mt-5 flex'>
-              <button className='px-3 py-3 bg-pink3 border border-pink2 hover:opacity-90 text-gray-500'>
+              <button
+                onClick={handleAddToCart}
+                className='px-3 py-3 bg-pink3 border border-pink2 hover:opacity-90 text-gray-500 rounded-sm'
+              >
                 Thêm vào giỏ
               </button>
-              <button className='ml-10 px-5 py-3 bg-pink hover:opacity-90 text-gray-500'>Mua ngay</button>
+              <button className='ml-10 px-5 py-3 bg-pink hover:opacity-90 text-gray-500 rounded-sm'>Mua ngay</button>
             </div>
           </div>
           <div className='shadow-sm col-start-2 col-span-11 my-8 mt-10'>
             <div className='uppercase mb-4'>Đánh giá từ khách hàng</div>
-            <div className='border-y py-3'>
-              <div className='flex ml-5 items-top'>
-                <div className='flex w-7 h-7 ml-4 mr-2 flex-shrink-0'>
-                  <img src={getAvatarURL('f')} alt='' className='rounded-full w-full h-full object-cover bg-pink' />
+            {reviewsData?.data.data.map((reivew) => {
+              return (
+                <div className='border-y py-3'>
+                  <div className='flex ml-5 items-top'>
+                    <div className='flex w-7 h-7 ml-4 mr-2 flex-shrink-0'>
+                      <img
+                        src={getAvatarURL(reivew.userImage)}
+                        alt=''
+                        className='rounded-full w-full h-full object-cover bg-pink'
+                      />
+                    </div>
+                    <div className='mr-4 grid'>
+                      <div>{reivew.username}</div>
+                      <div className='text-gray-400 text-xs'>{reivew.commentDate}</div>
+                    </div>
+                    <ProductRating rating={reivew.rate as number} />
+                    <span className='text-gray-400 text-sm'>{reivew?.rate}</span>
+                  </div>
+                  <div className='mt-2 ml-10'>{reivew.content}</div>
                 </div>
-                <div className='mr-4 grid'>
-                  <div>Nguyenconguan</div>
-                  <div className='text-gray-400 text-xs'>2024-04-01</div>
-                </div>
-                <ProductRating rating={3} />
-                <span className='text-gray-400 text-sm'>3</span>
-              </div>
-              <div className='mt-2 ml-10'>hàng kém chất lượng. hàng giả hàng nhái</div>
-            </div>
-            <div className='border-y py-3'>
-              <div className='flex ml-5 items-top'>
-                <div className='flex w-7 h-7 ml-4 mr-2 flex-shrink-0'>
-                  <img src={getAvatarURL('f')} alt='' className='rounded-full w-full h-full object-cover bg-pink' />
-                </div>
-                <div className='mr-4 grid'>
-                  <div>Nguyenconguan</div>
-                  <div className='text-gray-400 text-xs'>2024-04-01</div>
-                </div>
-                <ProductRating rating={3} />
-                <span className='text-gray-400 text-sm'>3</span>
-              </div>
-              <div className='mt-2 ml-10'>hàng kém chất lượng. hàng giả hàng nhái</div>
-            </div>
-            <div className='border-y py-3'>
-              <div className='flex ml-5 items-top'>
-                <div className='flex w-7 h-7 ml-4 mr-2 flex-shrink-0'>
-                  <img src={getAvatarURL('f')} alt='' className='rounded-full w-full h-full object-cover bg-pink' />
-                </div>
-                <div className='mr-4 grid'>
-                  <div>Nguyenconguan</div>
-                  <div className='text-gray-400 text-xs'>2024-04-01</div>
-                </div>
-                <ProductRating rating={3} />
-                <span className='text-gray-400 text-sm'>3</span>
-              </div>
-              <div className='mt-2 ml-10'>hàng kém chất lượng. hàng giả hàng nhái</div>
-            </div>
+              )
+            })}
           </div>
         </div>
         <div className='pt-8 shadow-sm'>

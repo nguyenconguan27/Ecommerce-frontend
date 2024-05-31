@@ -1,21 +1,90 @@
 import { Link } from 'react-router-dom'
+import { QueryConfig } from 'src/hooks/useQueryConfig'
+import { createSearchParams, useNavigate } from 'react-router-dom'
+import { omit } from 'lodash'
+import { ProductListConfig } from 'src/types/product.type'
+import path from 'src/constants/path'
+import { sortField, dir } from 'src/constants/productFilter'
+import classNames from 'classnames'
 
-export default function Filter() {
+interface Props {
+  queryConfig: QueryConfig
+}
+
+export default function Filter({ queryConfig }: Props) {
+  const { sort_field = '', sort_dir, page_num = '1' } = queryConfig
+  const navigate = useNavigate()
+  const isActiveFilter = (sortByValue: Exclude<ProductListConfig['sort_field'], undefined>) => {
+    return sort_field === sortByValue
+  }
+  const handleSort = (sortFieldValue: Exclude<ProductListConfig['sort_field'], undefined>) => {
+    navigate({
+      pathname: path.productList,
+      search: createSearchParams(
+        omit(
+          {
+            ...queryConfig,
+            sort_field: sortFieldValue
+          },
+          ['sort_dir']
+        )
+      ).toString()
+    })
+  }
+  const handlePriceOrder = (orderValue: Exclude<ProductListConfig['sort_dir'], undefined>) => {
+    navigate({
+      pathname: path.productList,
+      search: createSearchParams({
+        ...queryConfig,
+        sort_dir: orderValue,
+        sort_field: sortField.price
+      }).toString()
+    })
+  }
   return (
     <div className='bg-gray-100 container py-2'>
       <div className='flex justify-between'>
         <div className='flex'>
-          <button className='p-2 bg-white hover:bg-pink rounded-sm'>Mới nhất</button>
-          <button className='p-2 bg-white hover:bg-pink rounded-sm ml-4'>Bán chạy nhất</button>
-          <div className='p-2 bg-white ml-4 rounded-sm'>
-            <select name='' id='' className='outline-none'>
-              <option value='' disabled>
+          <button
+            className={classNames('p-2 rounded-sm', {
+              'bg-pink': isActiveFilter(sortField.release_date),
+              'bg-white hover:bg-pink ': !isActiveFilter(sortField.release_date)
+            })}
+            onClick={() => handleSort(sortField.release_date)}
+          >
+            Mới nhất
+          </button>
+          <button
+            className={classNames('p-2 rounded-sm ml-4', {
+              'bg-pink': isActiveFilter(sortField.sold),
+              'bg-white hover:bg-pink ': !isActiveFilter(sortField.sold)
+            })}
+            onClick={() => handleSort(sortField.sold)}
+          >
+            Bán chạy nhất
+          </button>
+          <div className=' bg-white ml-4 rounded-sm hover:bg-pink'>
+            <select
+              name=''
+              id=''
+              className={classNames('outline-none w-full h-full p-2', {
+                'bg-pink': isActiveFilter(sortField.price),
+                'hover:bg-pink': !isActiveFilter(sortField.price)
+              })}
+              value={sort_dir || ''}
+              onChange={(event) =>
+                handlePriceOrder(event.target.value as Exclude<ProductListConfig['sort_dir'], undefined>)
+              }
+            >
+              <option className='bg-gray-200 py-2' value='' disabled>
                 Giá
               </option>
-              <option value='' className='hover:bg-pink py-2'>
+              <option value={dir.asc} className='bg-gray-200 py-2'>
                 Thấp đến cao
               </option>
-              <option>Cao đến Thấp</option>
+              <option value={dir.desc} className='bg-gray-200 py-2'>
+                Cao đến Thấp
+              </option>
             </select>
           </div>
         </div>

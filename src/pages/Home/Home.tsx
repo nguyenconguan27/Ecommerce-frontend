@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import categoryApi from 'src/apis/category.api'
 import CategoryShow from './components/CategoryList'
+import Service from './components/Service'
 
 export default function Home() {
   const { data: categoryList } = useQuery({
@@ -15,8 +16,9 @@ export default function Home() {
     <div>
       <Slider></Slider>
       <div className='container'>
+        <Service></Service>
         <div className='w-full'>
-          <div className=''>
+          <div>
             {categoryList?.data.data.map((element, index) => {
               if (index <= 3) return <CategoryShow category={element} />
             })}

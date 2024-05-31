@@ -1,4 +1,4 @@
-import { User } from 'src/types/user.type'
+import { Customer, User } from 'src/types/user.type'
 
 export const LocalSotrageEventTarget = new EventTarget()
 

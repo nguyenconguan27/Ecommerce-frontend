@@ -8,9 +8,10 @@ interface Props {
   className?: string
   placement: Placement
   offsetFix?: number
+  isArrowOpen?: Boolean
 }
 
-export default function Popover({ children, popover, className, placement, offsetFix }: Props) {
+export default function Popover({ children, popover, className, placement, offsetFix, isArrowOpen }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const arrowEl = useRef<HTMLElement>(null)
 
@@ -56,15 +57,18 @@ export default function Popover({ children, popover, className, placement, offse
               exit={{ opacity: 0, scale: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <span
-                // mũi trên chỉ là một khối có kích thước 0 0. sau đó cho border vào
-                className='absolute translate-y-[-95%] border-[10px] border-x-transparent border-t-transparent border-b-white'
-                ref={arrowEl}
-                style={{
-                  left: middlewareData.arrow?.x ?? 0,
-                  top: middlewareData.arrow?.y ?? 0
-                }}
-              />
+              {isArrowOpen && (
+                <span
+                  // mũi trên chỉ là một khối có kích thước 0 0. sau đó cho border vào
+                  className='absolute translate-y-[-95%] border-[10px] border-x-transparent border-t-transparent border-b-white'
+                  ref={arrowEl}
+                  style={{
+                    left: middlewareData.arrow?.x ?? 0,
+                    top: middlewareData.arrow?.y ?? 0
+                  }}
+                />
+              )}
+
               {popover}
             </motion.div>
           )}

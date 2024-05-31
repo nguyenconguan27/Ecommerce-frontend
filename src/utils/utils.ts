@@ -23,7 +23,7 @@ export function isAxiosUnauthorizedError<UnauthorizedError>(error: unknown): err
 export function isAxiosExpiredTokenError<UnauthorizedError>(error: unknown): error is AxiosError<UnauthorizedError> {
   return (
     isAxiosUnauthorizedError<ErrorResponse<{ name: string; message: string }>>(error) &&
-    error.response?.data?.data?.name === 'EXPIRED_TOKEN'
+    error.response?.data?.message === 'Expired_Token'
   )
 }
 
@@ -64,4 +64,13 @@ export const generateNameId = ({ name, id }: { name: string; id: string }) => {
 export const getIdFromNameId = (nameId: string) => {
   const arr = nameId.split('-i-')
   return arr[arr.length - 1]
+}
+
+export const dateTranfer = (time: number) => {
+  let date = new Date(time)
+  let day = date.getUTCDate()
+  let month = date.getUTCMonth() + 1
+  let year = date.getUTCFullYear()
+  let formattedDate = `${day}/${month}/${year}`
+  return formattedDate
 }

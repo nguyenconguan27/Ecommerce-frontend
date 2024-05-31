@@ -28,10 +28,10 @@ export default function QuantitySelect({
   const handleIncrease = () => {
     if (value < productQuantity) {
       value = value + 1
+      console.log(value)
     }
     increase && increase(value)
   }
-
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let _value = Number(event.target.value)
     if (_value > productQuantity) {

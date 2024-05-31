@@ -1,12 +1,13 @@
-import { User } from './user.type'
+import { Customer, User } from './user.type'
 import { SuccessResponse } from './utils.type'
 
 export type AuthResponse = SuccessResponse<{
   accessToken: string
   refreshToken: string
-  userDTO: User
+  userDTO: Customer
 }>
 
 export type RefreshTokenResponse = SuccessResponse<{
   accessToken: string
+  refreshToken: string
 }>

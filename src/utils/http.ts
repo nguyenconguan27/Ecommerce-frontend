@@ -5,15 +5,15 @@ import { AuthResponse, RefreshTokenResponse } from 'src/types/auth.type'
 import {
   clearLS,
   getAccessTokenFromLS,
+  getProfileFromLS,
   getRefreshTokenFromLS,
   saveAccesTokenToLS,
   saveProfileToLS,
   saveRefreshTokenToLS
 } from './auth'
 import config from 'src/constants/config'
-import { URL_LOGIN, URL_LOGOUT, URL_REFRESH_TOKEN, URL_REGISTER } from 'src/apis/auth.api'
-import { isAxiosExpiredTokenError } from './utils'
-import { ErrorResponse } from 'src/types/utils.type'
+import { URL_LOGIN, URL_LOGOUT, URL_REGISTER } from 'src/apis/auth.api'
+const URL_REFRESH_TOKEN = '/auth/refresh-token'
 
 class Http {
   instance: AxiosInstance
@@ -43,7 +43,7 @@ class Http {
         const { url } = response.config
         if (url === URL_LOGIN || url === URL_REGISTER) {
           const data = response.data as AuthResponse
-          this.accessToken = data.data.accessToken
+          this.accessToken = 'Bearer ' + data.data.accessToken
           this.refreshToken = data.data.refreshToken
           saveRefreshTokenToLS(this.refreshToken)
           saveAccesTokenToLS(this.accessToken)
@@ -59,49 +59,60 @@ class Http {
         if (
           ![HttpStatusCode.UnprocessableEntity, HttpStatusCode.Unauthorized].includes(error.response?.status as number)
         ) {
+          console.log(error)
           const data: any | undefined = error.response?.data
           const message = data.message || error.message
           toast.error(message)
         }
-        // l
         if (error.response?.status === HttpStatusCode.Unauthorized) {
-          if (isAxiosExpiredTokenError<ErrorResponse<{ name: string; message: string }>>(error)) {
-            const config = error.response.config
-            const { url } = config
-            if (url !== URL_REFRESH_TOKEN) {
-              this.refreshTokenRequest = this.refreshTokenRequest
-                ? this.refreshTokenRequest
-                : this.handleRefreshToken().finally(() => {
+          const configURL = error.response?.config || { headers: {}, url: '' }
+          const { url } = configURL
+          if (url !== URL_REFRESH_TOKEN) {
+            this.refreshTokenRequest = this.refreshTokenRequest
+              ? this.refreshTokenRequest
+              : this.handleRefreshToken().finally(() => {
+                  setTimeout(() => {
                     this.refreshTokenRequest = null
-                  })
-              return this.refreshTokenRequest
-                .then((access_token) => {
-                  config.headers.Authorization = access_token
-                  return this.instance(config)
+                  }, 10000)
                 })
-                .catch((error) => {
-                  throw error
-                })
-            }
-
-            clearLS()
-            this.accessToken = ''
-            this.refreshToken = ''
-            toast.error(error.response.data.data?.message)
+            return this.refreshTokenRequest
+              .then((access_token) => {
+                return this.instance({ ...configURL, headers: { ...configURL.headers, authorization: access_token } })
+              })
+              .catch((error) => {
+                throw error
+              })
           }
+          toast.error('Vui lòng đăng nhập lại')
+          clearLS()
+          this.accessToken = ''
+          this.refreshToken = ''
+          setTimeout(() => {
+            window.location.href = `http://localhost:3001/login`
+          }, 1000)
         }
         return Promise.reject(error)
       }
     )
   }
-
   private handleRefreshToken() {
-    return this.instance
-      .post<RefreshTokenResponse>(URL_REFRESH_TOKEN, {
-        refresh_token: this.refreshToken
-      })
+    const profile = getProfileFromLS()
+    return axios
+      .post<RefreshTokenResponse>(
+        `${config.BASEURL}${URL_REFRESH_TOKEN}`,
+        {
+          refreshToken: this.refreshToken,
+          username: profile.username
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
       .then((res) => {
-        const { accessToken } = res.data.data
+        let { accessToken } = res.data.data
+        accessToken = 'Bearer ' + accessToken
         saveAccesTokenToLS(accessToken)
         this.accessToken = accessToken
         return accessToken

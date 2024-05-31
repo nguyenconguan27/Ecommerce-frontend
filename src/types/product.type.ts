@@ -1,10 +1,12 @@
+import { Category } from './category.type'
+
 export interface ProductType {
   id: number
   codeId: string
   price: number
   prePrice: number
   imageList: Image[]
-  categoryId: number
+  categoryId: Category
   title: string
   des: string
   rate: number

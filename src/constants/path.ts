@@ -10,7 +10,9 @@ const path = {
   productDetail: ':nameId',
   admin: '/admin',
   admin_manger_bill: '/admin/bill',
-  admin_manger_cate: '/admin/category'
+  admin_manger_cate: '/admin/category',
+  cart: '/cart',
+  paymentConfig: '/payment-confirm'
 }
 
 export default path

@@ -17,6 +17,7 @@
     "@types/dompurify": "^3.0.5",
     "@types/html-to-text": "^9.0.4",
     "@types/omit": "^1.0.3",
+    "@types/react-facebook-login": "^4.1.11",
     "aos": "^2.3.4",
     "axios": "^1.6.8",
     "chart.js": "^4.4.2",

@@ -13,6 +13,8 @@ import UserLayout from './pages/Customer/layout/UserLayout/UserLayout'
 import Profile from './pages/Customer/pages/Profile'
 import HistoryPurchase from './pages/Customer/pages/HistoryPurchase'
 import ChangePassword from './pages/Customer/pages/ChangePassword'
+import Cart from './pages/Cart'
+import Payment from './components/Payment'
 export default function useRouteElements() {
   const { isAuthenticated } = useContext(AppContext)
 
@@ -27,7 +29,7 @@ export default function useRouteElements() {
     {
       path: path.productList,
       element: (
-        <MainLayout>
+        <MainLayout breadTag={'Sản phẩm'}>
           <ProductFilter />
         </MainLayout>
       )
@@ -35,7 +37,7 @@ export default function useRouteElements() {
     {
       path: path.productDetail,
       element: (
-        <MainLayout>
+        <MainLayout breadTag={'Chi tiết'}>
           <ProductDetail />
         </MainLayout>
       )
@@ -70,18 +72,26 @@ export default function useRouteElements() {
       path: '',
       element: <ProtectedRoute />,
       children: [
-        // {
-        //   path: path.cart,
-        //   element: (
-        //     <CartLayout>
-        //       <Cart />
-        //     </CartLayout>
-        //   )
-        // },
+        {
+          path: path.paymentConfig,
+          element: (
+            <MainLayout>
+              <Payment />
+            </MainLayout>
+          )
+        },
+        {
+          path: path.cart,
+          element: (
+            <MainLayout breadTag={'Giỏ hàng'}>
+              <Cart />
+            </MainLayout>
+          )
+        },
         {
           path: path.user,
           element: (
-            <MainLayout>
+            <MainLayout breadTag={'Tài khoản'}>
               <UserLayout />
             </MainLayout>
           ),
