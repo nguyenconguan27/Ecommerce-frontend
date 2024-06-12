@@ -5,7 +5,10 @@ import path from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3001
+    port: 3001,
+    fs: {
+      cachedChecks: false
+    }
   },
   css: {
     devSourcemap: true

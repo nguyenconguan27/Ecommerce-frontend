@@ -40,7 +40,7 @@ export default function DateSelect({ value, onChange, errorMessage }: Props) {
         <select
           onChange={handleChange}
           name='name'
-          className='border border-gray-300 px-3 py-2 hover:border-orange cursor-pointer'
+          className='border border-gray-300 px-3 py-2 hover:border-orange cursor-pointer rounded-sm'
           value={value?.getDate() || date.date}
         >
           {range(1, 32).map((item) => (
@@ -52,7 +52,7 @@ export default function DateSelect({ value, onChange, errorMessage }: Props) {
         <select
           onChange={handleChange}
           name='month'
-          className='border border-gray-300 px-3 py-2 hover:border-orange cursor-pointer mx-3'
+          className='border border-gray-300 px-3 py-2 hover:border-orange cursor-pointer mx-3 rounded-sm'
           value={value?.getMonth() || date.month}
         >
           {range(0, 13).map((item) => (
@@ -64,7 +64,7 @@ export default function DateSelect({ value, onChange, errorMessage }: Props) {
         <select
           onChange={handleChange}
           name='year'
-          className='border border-gray-300 px-3 py-2 hover:border-orange cursor-pointer'
+          className='border border-gray-300 px-3 py-2 hover:border-orange cursor-pointer rounded-sm'
           value={value?.getFullYear() || date.year}
         >
           {range(1990, 2024).map((item) => (

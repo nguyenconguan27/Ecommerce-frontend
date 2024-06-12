@@ -56,7 +56,6 @@ function Info() {
         </div>
       </div>
       <div className='mt-4 flex items-start flex-wrap'>
-        <div className='md:w-[20%] text-gray-600 text-right'>Đại chỉ</div>
         {/* <div className='md:ml-3 md:w-[70%] w-[100%]'>
           <Input
             classNameInput='p-2 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-sm'
@@ -163,7 +162,7 @@ export default function Profile() {
         <span className='text-gray-600'>Quản lý tài khoản</span>
       </div>
       <FormProvider {...methods}>
-        <form className='pt-3 flex flex-col flex-col-reverse md:flex-row md:ml-10'>
+        <form className='pt-3 flex flex-col-reverse md:flex-row md:ml-10'>
           <div className='md:w-[70%]'>
             <div className='mt-4 flex items-start flex-wrap'>
               <div className='md:w-[20%] text-gray-600 text-right'>Email</div>
@@ -173,7 +172,7 @@ export default function Profile() {
             <div className='flex flex-wrap'>
               <div className='md:w-[20%]'></div>
               <div className='mt-2 pl-3 md:w-[70%] w-[100%]'>
-                <Button className='bg-pink2 text-white px-3 py-2' type='submit'>
+                <Button className='bg-pink2 text-white px-3 py-2 rounded-sm' type='submit'>
                   Lưu
                 </Button>
               </div>

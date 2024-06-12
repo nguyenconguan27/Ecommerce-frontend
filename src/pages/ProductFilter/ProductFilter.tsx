@@ -10,6 +10,7 @@ import { ProductListConfig } from 'src/types/product.type'
 import Product from 'src/components/ProductList/Product/Product'
 import categoryApi from 'src/apis/category.api'
 import { Category } from 'src/types/category.type'
+import Pagination from 'src/components/Pagination/Pagination'
 
 export default function ProductFilter() {
   const queryConfig = useQueryConfig()
@@ -54,6 +55,7 @@ export default function ProductFilter() {
               )
             })}
           </div>
+          <Pagination queryConfig={queryConfig} pageSize={productData?.data.data.totalPage as number} />
         </div>
       </div>
     </div>

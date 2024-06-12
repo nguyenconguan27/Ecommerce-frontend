@@ -36,7 +36,7 @@ export default function InputFile({ onChange }: Props) {
           }}
         />
         <button
-          className='px-3 py-2 border border-black/10 mt-3 hover:bg-neutral-100'
+          className='px-3 py-2 border border-black/10 mt-3 hover:bg-neutral-100 rounded-sm'
           type='button'
           onClick={handleUpload}
         >

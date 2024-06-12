@@ -31,18 +31,37 @@ export default function AsideFilter({ queryConfig, categories }: Props) {
       {categories.map((element) => {
         const isActive = element.id === (Number(category_id) as number)
         return (
-          <Link
-            to={{
-              pathname: path.productList,
-              search: createSearchParams({ ...queryConfig, category_id: String(element.id) }).toString()
-            }}
-            className={classNames('w-full mt-2 text-gray-500 border-b-2 border-gray-100 py-1', {
+          <div
+            className={classNames('w-full flex items-center mt-2 text-gray-500 border-b-2 border-gray-100 py-1', {
               'text-pink2': isActive,
               'hover:text-pink2': !isActive
             })}
           >
-            {element.name}
-          </Link>
+            {isActive && (
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 24 24'
+                strokeWidth='1.5'
+                stroke='currentColor'
+                className='size-4 mr-2'
+              >
+                <path
+                  stroke-linecap='round'
+                  stroke-linejoin='round'
+                  d='m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5'
+                />
+              </svg>
+            )}
+            <Link
+              to={{
+                pathname: path.productList,
+                search: createSearchParams({ ...queryConfig, category_id: String(element.id) }).toString()
+              }}
+            >
+              {element.name}
+            </Link>
+          </div>
         )
       })}
     </div>

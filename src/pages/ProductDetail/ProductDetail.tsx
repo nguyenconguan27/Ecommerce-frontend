@@ -13,7 +13,7 @@ import QuantitySelect from 'src/components/QuantitySelect'
 import { orderStatus } from 'src/constants/order'
 import { ProductType } from 'src/types/product.type'
 import { getProfileFromLS } from 'src/utils/auth'
-import { formatCurrency, getAvatarURL, getIdFromNameId, getImage, perSale } from 'src/utils/utils'
+import { dateTranfer, formatCurrency, getAvatarURL, getIdFromNameId, getImage, perSale } from 'src/utils/utils'
 
 export default function ProductDetail() {
   const imageRef = useRef<HTMLImageElement>(null)
@@ -269,12 +269,12 @@ export default function ProductDetail() {
                     </div>
                     <div className='mr-4 grid'>
                       <div>{reivew.username}</div>
-                      <div className='text-gray-400 text-xs'>{reivew.commentDate}</div>
+                      <div className='text-gray-400 text-xs'>{dateTranfer(reivew.commentDate as number)}</div>
                     </div>
                     <ProductRating rating={reivew.rate as number} />
                     <span className='text-gray-400 text-sm'>{reivew?.rate}</span>
                   </div>
-                  <div className='mt-2 ml-10'>{reivew.content}</div>
+                  <div className='mt-2 ml-16'>{reivew.content}</div>
                 </div>
               )
             })}

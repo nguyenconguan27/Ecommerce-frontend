@@ -3,7 +3,7 @@ import cart from 'src/assets/image/icons8-cart.gif'
 import bell from 'src/assets/image/icons8-bell.gif'
 import noProduct from 'src/assets/image/no-product.png'
 import { Link } from 'react-router-dom'
-import { useContext, useState } from 'react'
+import { useContext, useMemo, useState } from 'react'
 import './index.css'
 import Bread from '../Breadcrumb/Bread'
 import { motion } from 'framer-motion'
@@ -12,7 +12,7 @@ import Popover from '../Popover'
 import Input from '../Input/Input'
 import { dateTranfer, formatCurrency, getAvatarURL } from 'src/utils/utils'
 import { AppContext } from 'src/context/app.context'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { orderStatus } from 'src/constants/order'
 import orderApi from 'src/apis/order.api'
 import useSearchProduct from 'src/hooks/useSearchProduct'
@@ -25,6 +25,7 @@ interface Props {
 export default function Header({ breadTag }: Props) {
   const [scroll, setScroll] = useState(false)
   const { isAuthenticated, profile } = useContext(AppContext)
+  const queryClient = useQueryClient()
 
   const { register, onSubmit } = useSearchProduct()
 
@@ -39,6 +40,13 @@ export default function Header({ breadTag }: Props) {
     enabled: isAuthenticated
   })
 
+  const updateMotifyStatusMutation = useMutation({
+    mutationFn: () => notifyApis.updateStatus(profile?.id as number),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notitfy', profile?.id] })
+    }
+  })
+
   const headerTransaction = () => {
     if (window.scrollY >= 100) {
       setScroll(true)
@@ -48,8 +56,19 @@ export default function Header({ breadTag }: Props) {
   }
   window.addEventListener('scroll', headerTransaction)
 
-  const onSearchProduct = () => {}
+  const handleUpdateNotifyStatus = () => {
+    updateMotifyStatusMutation.mutate()
+  }
 
+  const amountUnreadNotify = useMemo(() => {
+    let amount = 0
+    notifyData?.data.data.map((notify) => {
+      if (notify.status === 0) {
+        amount += 1
+      }
+    })
+    return amount
+  }, [notifyData])
   return (
     <motion.div className={'border-b-1 shadow-md top-0 z-20 bg-cyan-200 ' + (scroll ? 'header-scroll sticky' : '')}>
       <div className='container text-sm'>
@@ -344,10 +363,10 @@ export default function Header({ breadTag }: Props) {
                 className='flex items-center py-2 hover:text-gray-300 cursor-point'
                 popover={
                   <div className='flex flex-col py-2 px-3 text-xs'>
-                    <Link to={path.user} className='py-2 hover:text-pink2 '>
+                    <Link to={path.profile} className='py-2 hover:text-pink2 '>
                       Tài khoản của tôi
                     </Link>
-                    <Link to='/' className='py-2 hover:text-pink2'>
+                    <Link to={path.historyPurchase} className='py-2 hover:text-pink2'>
                       Đơn mua
                     </Link>
                     <button className='hover:text-gray-400 py-2 flex items-end justify-start gap-1'>
@@ -475,28 +494,33 @@ export default function Header({ breadTag }: Props) {
               placement={'bottom-end'}
               popover={
                 isAuthenticated && (
-                  <div className='flex flex-col w-[300px] bg-white text-sm max-h-[400px] overflow-y-scroll'>
+                  <div className='flex flex-col w-[300px] bg-white text-sm max-h-[400px]'>
                     <div className='flex justify-between m-3'>
                       <div className='text-gray-400 capitalize mt-2 text-xs'>Thông báo</div>
-                      <button className=' text-gray-500 p-2 rounded-sm bg-pink hover:opacity-90'>
+                      <button
+                        onClick={handleUpdateNotifyStatus}
+                        className=' text-gray-500 p-2 rounded-sm bg-pink hover:opacity-90'
+                      >
                         Đánh dấu đã đọc
                       </button>
                     </div>
-
-                    {notifyData?.data.data.map((notify, index) => (
-                      <div
-                        className={classNames(
-                          'flex align-middle items-start p-3 border-t  border-gray-300 justify-between gap-2 w-[100%]',
-                          {
-                            'bg-gray-200': notify.status === 0
-                          }
-                        )}
-                        key={index}
-                      >
-                        <div className='flex-grow text-xs'>{notify.content}</div>
-                        <div className='text-pink2 text-xs'>{dateTranfer(notify.date)}</div>
-                      </div>
-                    ))}
+                    <div className='overflow-y-auto'>
+                      {notifyData?.data.data.map((notify, index) => (
+                        <div
+                          className={classNames(
+                            'flex align-middle items-start p-3 border-t  border-gray-300 justify-between gap-2 w-[100%]',
+                            {
+                              'bg-gray-200': notify.status === 0,
+                              'bg-gray-50': notify.status === 1
+                            }
+                          )}
+                          key={index}
+                        >
+                          <div className='flex-grow text-xs'>{notify.content}</div>
+                          <div className='text-pink2 text-xs'>{dateTranfer(notify.date)}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )
               }
@@ -504,7 +528,7 @@ export default function Header({ breadTag }: Props) {
               <img src={bell} className='w-9' />
               {isAuthenticated && (
                 <span className='absolute bg-pink rounded-full w-5 h-4 right-[-4px] top-[-6px] text-gray-600 flex justify-center items-center text-xs'>
-                  {notifyData?.data.data.length}
+                  {amountUnreadNotify}
                 </span>
               )}
             </Popover>
